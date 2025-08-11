@@ -1,5 +1,5 @@
 package bokchi.java.dao.jdbc;
 
-public class JdbcItemDao {
+public class JdbcItemDaoImple {
 
 }
