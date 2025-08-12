@@ -5,52 +5,212 @@ import bokchi.java.model.UserVO;
 import bokchi.java.model.enums.Role;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.sql.SQLIntegrityConstraintViolationException;
 
 public class UserSignUpFrame extends JFrame {
-    private final JTextField tfUsername = new JTextField(15);
-    private final JPasswordField pfPassword = new JPasswordField(15);
-    private final JPasswordField pfPassword2 = new JPasswordField(15);
-    private final JTextField tfName = new JTextField(15);
-    private final JTextField tfPhone = new JTextField(15);
+    private final JTextField tfUsername = new JTextField(18);
+    private final JPasswordField pfPassword = new JPasswordField(18);
+    private final JPasswordField pfPassword2 = new JPasswordField(18);
+    private final JTextField tfName = new JTextField(18);
+    private final JTextField tfPhone = new JTextField(18);
+    private final JCheckBox cbShowPw = new JCheckBox("비밀번호 표시");
     private final JButton btnSignUp = new JButton("가입");
     private final JButton btnCancel = new JButton("취소");
 
+    // 브랜드 컬러 (로그인과 동일 톤)
+    private static final Color BRAND = new Color(0x006241);
+    private static final Color BRAND_DARK = new Color(0x004D33);
+    private static final Color BG = new Color(0xF6F7F6);
+
     public UserSignUpFrame() {
-        super("회원가입");
+        super("Star Bokchi · 회원가입");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(380, 280);
+        setSize(520, 600);
         setLocationRelativeTo(null);
 
-        JPanel form = new JPanel(new GridLayout(5, 2, 8, 8));
-        form.add(new JLabel("아이디"));
-        form.add(tfUsername);
-        form.add(new JLabel("비밀번호"));
-        form.add(pfPassword);
-        form.add(new JLabel("비밀번호 확인"));
-        form.add(pfPassword2);
-        form.add(new JLabel("이름"));
-        form.add(tfName);
-        form.add(new JLabel("전화번호"));
-        form.add(tfPhone);
-
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttons.add(btnCancel);
-        buttons.add(btnSignUp);
-
-        JPanel root = new JPanel(new BorderLayout(12, 12));
-        root.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
-        root.add(form, BorderLayout.CENTER);
-        root.add(buttons, BorderLayout.SOUTH);
-        setContentPane(root);
-
-        btnSignUp.addActionListener(this::onSignUp);
-        btnCancel.addActionListener(e -> dispose());
+        setContentPane(buildRoot());
+        wireEvents();
         getRootPane().setDefaultButton(btnSignUp);
     }
 
+    private JComponent buildRoot() {
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(BG);
+        root.add(buildHeader(), BorderLayout.NORTH);
+        root.add(buildCard(), BorderLayout.CENTER);
+        return root;
+    }
+
+    /** 상단 헤더(로그인과 동일 스타일, 높이 72) */
+    private JComponent buildHeader() {
+        JPanel header = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setPaint(new GradientPaint(0,0, BRAND, 0,getHeight(), BRAND_DARK));
+                g2.fillRect(0,0,getWidth(),getHeight());
+                g2.dispose();
+            }
+        };
+        header.setLayout(new BorderLayout());
+        header.setPreferredSize(new Dimension(0, 72));
+
+        JLabel title = new JLabel("Star Bokchi", SwingConstants.CENTER);
+        title.setForeground(Color.WHITE);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+
+        JLabel subtitle = new JLabel("회원가입", SwingConstants.CENTER);
+        subtitle.setForeground(new Color(255,255,255,220));
+        subtitle.setFont(subtitle.getFont().deriveFont(Font.PLAIN, 13f));
+
+        JPanel box = new JPanel();
+        box.setOpaque(false);
+        box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+        box.add(Box.createVerticalStrut(10));
+        box.add(title);
+        box.add(Box.createVerticalStrut(2));
+        box.add(subtitle);
+        box.add(Box.createVerticalGlue());
+
+        header.add(box, BorderLayout.CENTER);
+        return header;
+    }
+
+    /** 중앙 카드(라운드+그림자) + 폼 */
+    private JComponent buildCard() {
+        JPanel wrap = new JPanel(new GridBagLayout());
+        wrap.setOpaque(false);
+
+        JPanel card = new JPanel(new GridBagLayout()) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // 그림자
+                g2.setColor(new Color(0,0,0,25));
+                g2.fillRoundRect(6, 8, getWidth()-12, getHeight()-12, 20, 20);
+
+                // 본체
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth()-12, getHeight()-12, 20, 20);
+                g2.dispose();
+
+                super.paintComponent(g);
+            }
+            @Override public boolean isOpaque() { return false; }
+        };
+        card.setBorder(BorderFactory.createEmptyBorder(28, 32, 24, 32));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(8, 8, 8, 8);
+        c.anchor = GridBagConstraints.WEST;
+        c.gridx = 0; c.gridy = 0; c.gridwidth = 2;
+
+        JLabel head = new JLabel("회원 정보 입력");
+        head.setFont(head.getFont().deriveFont(Font.BOLD, 18f));
+        head.setForeground(BRAND);
+        card.add(head, c);
+
+        // 필드 보더 공통
+        Border fieldBorder = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xDDDDDD)),
+                BorderFactory.createEmptyBorder(8,10,8,10)
+        );
+
+        // 아이디
+        c.gridy++; c.gridwidth = 1;
+        card.add(fieldLabel("아이디"), c);
+        c.gridx = 1;
+        tfUsername.setToolTipText("예: bokchi123");
+        tfUsername.setBorder(fieldBorder);
+        card.add(tfUsername, c);
+
+        // 비밀번호
+        c.gridx = 0; c.gridy++;
+        card.add(fieldLabel("비밀번호"), c);
+        c.gridx = 1;
+        pfPassword.setBorder(fieldBorder);
+        pfPassword.setEchoChar('\u2022');
+        card.add(pfPassword, c);
+
+        // 비밀번호 확인 + 표시 체크박스
+        c.gridx = 0; c.gridy++;
+        card.add(fieldLabel("비밀번호 확인"), c);
+        c.gridx = 1;
+        pfPassword2.setBorder(fieldBorder);
+        pfPassword2.setEchoChar('\u2022');
+        card.add(pfPassword2, c);
+
+        c.gridx = 1; c.gridy++;
+        cbShowPw.setOpaque(false);
+        cbShowPw.addActionListener(e -> {
+            char echo = cbShowPw.isSelected() ? (char)0 : '\u2022';
+            pfPassword.setEchoChar(echo);
+            pfPassword2.setEchoChar(echo);
+        });
+        card.add(cbShowPw, c);
+
+        // 이름
+        c.gridx = 0; c.gridy++;
+        card.add(fieldLabel("이름"), c);
+        c.gridx = 1;
+        tfName.setBorder(fieldBorder);
+        card.add(tfName, c);
+
+        // 전화번호
+        c.gridx = 0; c.gridy++;
+        card.add(fieldLabel("전화번호"), c);
+        c.gridx = 1;
+        tfPhone.setToolTipText("예: 010-1234-5678 또는 01012345678");
+        tfPhone.setBorder(fieldBorder);
+        card.add(tfPhone, c);
+
+        // 버튼 행
+        c.gridx = 0; c.gridy++;
+        c.gridwidth = 2;
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        buttons.setOpaque(false);
+        styleGhost(btnCancel);
+        stylePrimary(btnSignUp);
+        buttons.add(btnCancel);
+        buttons.add(btnSignUp);
+
+        card.add(Box.createVerticalStrut(8), c);
+        c.gridy++;
+        card.add(buttons, c);
+
+        wrap.add(card);
+        return wrap;
+    }
+
+    private JLabel fieldLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(l.getFont().deriveFont(Font.PLAIN, 13f));
+        return l;
+    }
+
+    private void stylePrimary(JButton b) {
+        b.setBackground(BRAND);
+        b.setForeground(Color.WHITE);
+        b.setFocusPainted(false);
+        b.setBorder(BorderFactory.createEmptyBorder(8,16,8,16));
+    }
+    private void styleGhost(JButton b) {
+        b.setBackground(Color.WHITE);
+        b.setForeground(BRAND);
+        b.setFocusPainted(false);
+        b.setBorder(BorderFactory.createLineBorder(BRAND));
+    }
+
+    private void wireEvents() {
+        btnSignUp.addActionListener(this::onSignUp);
+        btnCancel.addActionListener(e -> dispose());
+    }
+
+    // ================= 가입 로직(기존과 동일) =================
     private void onSignUp(ActionEvent e) {
         String username = tfUsername.getText().trim();
         String pw1 = new String(pfPassword.getPassword());
@@ -73,11 +233,11 @@ public class UserSignUpFrame extends JFrame {
             if (ans != JOptionPane.YES_OPTION) return;
         }
 
-        // 2) UserVO 생성
+        // UserVO 생성
         UserVO vo = new UserVO();
         vo.setUsername(username);
-        vo.setPassword(pw1);                
-        vo.setRole(Role.CUSTOMER);       
+        vo.setPassword(pw1);
+        vo.setRole(Role.CUSTOMER);
         vo.setName(name);
         vo.setPhone(phone);
         vo.setRewardBalance(0);
@@ -101,7 +261,7 @@ public class UserSignUpFrame extends JFrame {
             }
         } catch (Exception ex) {
             if (ex.getCause() instanceof SQLIntegrityConstraintViolationException
-                || ex instanceof SQLIntegrityConstraintViolationException) {
+                    || ex instanceof SQLIntegrityConstraintViolationException) {
                 JOptionPane.showMessageDialog(this, "중복된 전화번호입니다. 다른 번호를 사용하세요.");
             } else {
                 ex.printStackTrace();

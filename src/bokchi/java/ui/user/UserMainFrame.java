@@ -67,7 +67,7 @@ public class UserMainFrame extends JFrame {
         ));
 
         // 좌측: 로고/타이틀
-        JLabel title = new JLabel("Bokchi Coffee");
+        JLabel title = new JLabel("Star Bokchi");
         title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
         title.setForeground(BRAND);
 
