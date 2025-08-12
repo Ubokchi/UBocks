@@ -39,6 +39,13 @@ public class UserMainFrame extends JFrame {
 
         // 초기 로드
         loadFromDao(currentType);
+        
+        cartPanel.setCheckoutListener((cust, lines, total) -> {
+            // TODO: OrderService.checkout(cust, lines, total) 호출
+            // 결제 성공 시:
+            JOptionPane.showMessageDialog(this, "결제가 완료되었습니다. 합계: " + total + "원");
+            cartPanel.clearAll(); // 비우기
+        });
     }
 
     private JPanel buildRoot() {
@@ -87,7 +94,7 @@ public class UserMainFrame extends JFrame {
         header.add(center, BorderLayout.CENTER);
         header.add(right, BorderLayout.EAST);
 
-        // 🔎 검색 동작: 비어있으면 현재 카테고리, 아니면 DB 검색
+        // 검색 동작: 비어있으면 현재 카테고리, 아니면 DB 검색
         btnSearch.addActionListener(e -> {
             String q = tfSearch.getText().trim();
             if (q.isEmpty()) {
