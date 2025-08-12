@@ -17,7 +17,7 @@ public class ItemEditDialog extends JDialog {
     private final JButton btnOk = new JButton("확인");
     private final JButton btnCancel = new JButton("취소");
 
-    private ItemVO result; // OK 눌렀을 때만 세팅
+    private ItemVO result; // OK 눌렀을 때만
 
     public ItemEditDialog(Window owner, ItemVO origin) {
         super(owner, origin == null ? "상품 등록" : "상품 수정", ModalityType.APPLICATION_MODAL);
@@ -91,7 +91,7 @@ public class ItemEditDialog extends JDialog {
         dispose();
     }
 
-    /** OK이면 ItemVO, 취소면 null */
+    // OK이면 ItemVO, 취소면 null
     public ItemVO showDialog() {
         setVisible(true);
         return result;

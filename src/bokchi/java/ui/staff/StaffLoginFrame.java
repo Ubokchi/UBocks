@@ -59,7 +59,7 @@ public class StaffLoginFrame extends JFrame {
             return;
         }
 
-        // 로그인 성공 → 메인 오픈
+        // 로그인 성공 -> 메인 오픈
         SwingUtilities.invokeLater(() -> new StaffMainFrame(user).setVisible(true));
         dispose();
     }

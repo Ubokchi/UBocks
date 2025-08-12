@@ -10,7 +10,6 @@ import java.awt.event.ActionListener;
 public class ItemCard extends JPanel {
     private final ItemVO item; // ★ DB VO 객체 그대로 저장
 
-    // DB ItemVO 기반 생성자
     public ItemCard(ItemVO item, ActionListener onAdd) {
         this.item = item;
 
@@ -22,14 +21,13 @@ public class ItemCard extends JPanel {
                 BorderFactory.createEmptyBorder(10,10,10,10)
         ));
 
-        // (옵션) 이미지 자리 — 현재는 placeholder
+        // TODO : (옵션) 이미지 자리 — 현재는 placeholder
         JLabel thumb = new JLabel("IMG", SwingConstants.CENTER);
         thumb.setPreferredSize(new Dimension(72, 72));
         thumb.setOpaque(true);
         thumb.setBackground(new Color(0xF0F0F0));
         thumb.setBorder(BorderFactory.createLineBorder(new Color(0xE0E0E0)));
 
-        // 텍스트 구성
         JLabel lbTitle = new JLabel(item.getName());
         lbTitle.setFont(lbTitle.getFont().deriveFont(Font.BOLD));
 

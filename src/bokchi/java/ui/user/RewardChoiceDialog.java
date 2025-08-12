@@ -17,7 +17,7 @@ public class RewardChoiceDialog extends JDialog {
 
     public static class Entry {
         public final int itemId;
-        public final String label; // ex) "아메리카노 x3"
+        public final String label;
         public Entry(int itemId, String label) { this.itemId = itemId; this.label = label; }
         @Override public String toString() { return label; }
     }

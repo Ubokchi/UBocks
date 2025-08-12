@@ -47,7 +47,7 @@ public class JdbcRewardHistoryDaoImple {
         return vo;
     }
 
-    /** INSERT (생성된 PK를 VO에 세팅) */
+
     public int insert(RewardHistoryVO vo) {
         int result = 0;
         Connection conn = null;
@@ -82,7 +82,7 @@ public class JdbcRewardHistoryDaoImple {
         return result;
     }
 
-    /** ID로 단건 조회 */
+    // ID로 단건 조회
     public RewardHistoryVO findById(int historyId) {
         RewardHistoryVO vo = null;
         Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -101,7 +101,7 @@ public class JdbcRewardHistoryDaoImple {
         return vo;
     }
 
-    /** 특정 사용자 이력 전체 (최신순) */
+    // 아이디로 전체 조회
     public List<RewardHistoryVO> findByUserId(int userId) {
         List<RewardHistoryVO> list = new ArrayList<>();
         Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -120,7 +120,7 @@ public class JdbcRewardHistoryDaoImple {
         return list;
     }
 
-    /** 특정 주문 연동 이력 (주문별 적립/사용 확인) */
+    // OrderID로 주문정보 찾기
     public List<RewardHistoryVO> findByOrderId(int orderId) {
         List<RewardHistoryVO> list = new ArrayList<>();
         Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -139,7 +139,7 @@ public class JdbcRewardHistoryDaoImple {
         return list;
     }
 
-    /** 전체 이력 (관리자 화면용) */
+    // 리워드 히스토리 조회 - 관리자용
     public List<RewardHistoryVO> findAll() {
         List<RewardHistoryVO> list = new ArrayList<>();
         Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -157,7 +157,7 @@ public class JdbcRewardHistoryDaoImple {
         return list;
     }
 
-    /** 기간 + 사용자 조건 조회 (필요 시 사용) */
+    // UserID로 리워드 기간 조회
     public List<RewardHistoryVO> findByUserIdBetween(int userId, LocalDateTime from, LocalDateTime to) {
         List<RewardHistoryVO> list = new ArrayList<>();
         Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -181,7 +181,7 @@ public class JdbcRewardHistoryDaoImple {
         return list;
     }
 
-    /** 최근 N건 (UI 상단 요약용) */
+    // 상단 요약용 n건 조회
     public List<RewardHistoryVO> findRecentByUserId(int userId, int limit) {
         List<RewardHistoryVO> list = new ArrayList<>();
         Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -203,8 +203,7 @@ public class JdbcRewardHistoryDaoImple {
         return list;
     }
 
-    // --- 편의 메서드: 적립/사용/조정 기록 ---
-
+    
     public int recordEarn(int userId, Integer orderId, int stamps) {
         RewardHistoryVO vo = new RewardHistoryVO();
         vo.setUserId(userId);
@@ -224,7 +223,6 @@ public class JdbcRewardHistoryDaoImple {
     }
 
     public int recordAdjust(int userId, int delta, String noteIgnored) {
-        // note 컬럼이 없다면 무시. 필요하면 스키마/VO에 note 추가해서 확장.
         RewardHistoryVO vo = new RewardHistoryVO();
         vo.setUserId(userId);
         vo.setOrderId(null);

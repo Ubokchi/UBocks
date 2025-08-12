@@ -44,7 +44,7 @@ public class UserMainFrame extends JFrame {
             // TODO: OrderService.checkout(cust, lines, total) 호출
             // 결제 성공 시:
             JOptionPane.showMessageDialog(this, "결제가 완료되었습니다. 합계: " + total + "원");
-            cartPanel.clearAll(); // 비우기
+            cartPanel.clearCart(); // 비우기
         });
     }
 

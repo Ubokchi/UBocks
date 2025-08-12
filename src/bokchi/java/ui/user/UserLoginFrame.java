@@ -121,7 +121,7 @@ public class UserLoginFrame extends JFrame {
 	}
 
 	private boolean inTopRightCorner(MouseEvent e) {
-		// ***** glassPane contentPane 좌표로 변환
+		// ***** glassPane contentPane 좌표로 변환 - 어려움
 		// 비밀 좌표인지 구분하기 위한 부분임
 		Point p = SwingUtilities.convertPoint((Component) e.getSource(), e.getPoint(), getContentPane());
 		int w = getContentPane().getWidth();
@@ -130,7 +130,7 @@ public class UserLoginFrame extends JFrame {
 		return (xFromRight >= 0 && xFromRight <= HITBOX) && (y >= 0 && y <= HITBOX);
 	}
 
-	/** 스태프 로그인 화면으로 전환 */
+	// 스태프 로그인 화면으로 전환
 	private void switchToStaffLogin() {
 		SwingUtilities.invokeLater(() -> {
 			dispose();
