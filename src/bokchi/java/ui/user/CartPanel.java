@@ -1,5 +1,6 @@
 package bokchi.java.ui.user;
 
+import bokchi.java.model.ItemVO;
 import bokchi.java.model.UserVO;
 
 import javax.swing.*;
@@ -7,80 +8,137 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class CartPanel extends JPanel {
-    private final UserVO customer;
-    private final DefaultTableModel model = new DefaultTableModel(
-            new Object[]{"상품", "수량", "단가", "금액"}, 0) {
-        @Override public boolean isCellEditable(int r, int c) { return c == 1; } // 수량만 수정
-        @Override public Class<?> getColumnClass(int columnIndex) {
-            return switch (columnIndex) {
-                case 1,2,3 -> Integer.class;
-                default -> String.class;
-            };
-        }
-    };
-    private final JTable table = new JTable(model);
-    private final JLabel lbTotal = new JLabel("합계: 0 원");
-    private final JButton btnCheckout = new JButton("결제");
+    private final JTable table;
+    private final DefaultTableModel model;
+    private final JLabel lbTotal = new JLabel("총 금액: 0원");
+
+    private final UserVO customer; // ← 로그인 사용자 보관(필요 시 사용)
 
     public CartPanel(UserVO customer) {
-        super(new BorderLayout(8, 8));
         this.customer = customer;
 
+        setLayout(new BorderLayout(8,8));
         setPreferredSize(new Dimension(320, 0));
-        setBackground(Color.WHITE);
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xE5E5E5)),
-                BorderFactory.createEmptyBorder(10,10,10,10)
-        ));
+        setBorder(BorderFactory.createTitledBorder("장바구니"));
 
+        model = new DefaultTableModel(new Object[]{"상품명", "수량", "금액", "itemId", "단가", "재고"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                // 상품명/금액/숨김컬럼은 수정 불가, 수량만 수정 가능
+                return col == 1;
+            }
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                return switch (columnIndex) {
+                    case 1, 2, 4, 5 -> Integer.class; // 수량/금액/단가/재고는 정수
+                    default -> String.class;          // 상품명 등
+                };
+            }
+        };
+
+        table = new JTable(model);
+        table.setFillsViewportHeight(true);
         table.setRowHeight(24);
+
+        // 숨김 컬럼 (itemId, 단가, 재고)
+        hideColumn(3);
+        hideColumn(4);
+        hideColumn(5);
+
         add(new JScrollPane(table), BorderLayout.CENTER);
+        add(lbTotal, BorderLayout.SOUTH);
 
-        JPanel bottom = new JPanel(new BorderLayout());
-        lbTotal.setFont(lbTotal.getFont().deriveFont(Font.BOLD, 14f));
-        bottom.add(lbTotal, BorderLayout.WEST);
-        bottom.add(btnCheckout, BorderLayout.EAST);
-        add(bottom, BorderLayout.SOUTH);
-
-        // 수량 수정 시 합계 재계산
-        model.addTableModelListener(e -> recalc());
-
-        btnCheckout.addActionListener(e -> onCheckout());
+        // 수량 셀 변경 시 재고 한도 적용 + 금액/합계 재계산
+        model.addTableModelListener(e -> {
+            if (e.getColumn() == 1 || e.getColumn() == -1) {
+                enforceStockAndRecalc();
+            }
+        });
     }
 
-    public void addItem(String name, int qty, int unit) {
-        // 동일 상품이면 수량만 + 처리
-        for (int i = 0; i < model.getRowCount(); i++) {
-            if (name.equals(model.getValueAt(i, 0))) {
-                int newQty = (Integer) model.getValueAt(i, 1) + qty;
-                model.setValueAt(newQty, i, 1);
+    /** 컬럼 숨기기 */
+    private void hideColumn(int index) {
+        table.getColumnModel().getColumn(index).setMinWidth(0);
+        table.getColumnModel().getColumn(index).setMaxWidth(0);
+        table.getColumnModel().getColumn(index).setWidth(0);
+    }
+
+    /** 장바구니에 상품 추가 */
+    public void addItem(ItemVO vo, int qty) {
+        if (!vo.isActive()) {
+            JOptionPane.showMessageDialog(this, "판매 중이 아닌 상품입니다.");
+            return;
+        }
+        if (vo.getStock() <= 0) {
+            JOptionPane.showMessageDialog(this, "재고가 없습니다.");
+            return;
+        }
+
+        // 이미 있는 상품인지 확인(같은 itemId는 수량 합치기)
+        for (int r = 0; r < model.getRowCount(); r++) {
+            int existingId = (Integer) model.getValueAt(r, 3);
+            if (existingId == vo.getItemId()) {
+                int stock = (Integer) model.getValueAt(r, 5);
+                int curQty = (Integer) model.getValueAt(r, 1);
+                int newQty = Math.min(curQty + qty, stock);
+                if (newQty == curQty) {
+                    JOptionPane.showMessageDialog(this, "재고 한도를 초과할 수 없습니다.");
+                    return;
+                }
+                model.setValueAt(newQty, r, 1);
+                model.setValueAt(newQty * (Integer) model.getValueAt(r, 4), r, 2);
+                recalcTotal();
                 return;
             }
         }
-        model.addRow(new Object[]{name, qty, unit, qty * unit});
-        recalc();
+
+        // 새 상품 추가
+        int addQty = Math.min(qty, vo.getStock());
+        model.addRow(new Object[]{
+                vo.getName(),            // 0: 상품명
+                addQty,                  // 1: 수량
+                addQty * vo.getPrice(),  // 2: 금액
+                vo.getItemId(),          // 3: itemId (숨김)
+                vo.getPrice(),           // 4: 단가 (숨김)
+                vo.getStock()            // 5: 재고 (숨김)
+        });
+        recalcTotal();
     }
 
-    private void recalc() {
+    /** 수량 변경 시 재고 한도 강제 및 금액/합계 재계산 */
+    private void enforceStockAndRecalc() {
+        for (int r = 0; r < model.getRowCount(); r++) {
+            int qty = (Integer) model.getValueAt(r, 1);
+            int unit = (Integer) model.getValueAt(r, 4);
+            int stock = (Integer) model.getValueAt(r, 5);
+
+            if (qty > stock) {
+                qty = stock;
+                model.setValueAt(qty, r, 1);
+                JOptionPane.showMessageDialog(this, "재고 한도를 초과할 수 없습니다.");
+            } else if (qty <= 0) {
+                qty = 1;
+                model.setValueAt(qty, r, 1);
+            }
+            model.setValueAt(qty * unit, r, 2);
+        }
+        recalcTotal();
+    }
+
+    /** 총 금액 다시 계산 */
+    private void recalcTotal() {
         int total = 0;
-        for (int i = 0; i < model.getRowCount(); i++) {
-            int qty = (Integer) model.getValueAt(i, 1);
-            int unit = (Integer) model.getValueAt(i, 2);
-            model.setValueAt(qty * unit, i, 3);
-            total += qty * unit;
+        for (int r = 0; r < model.getRowCount(); r++) {
+            total += (Integer) model.getValueAt(r, 2);
         }
-        lbTotal.setText("합계: " + total + " 원");
+        lbTotal.setText("총 금액: " + total + "원");
     }
 
-    private void onCheckout() {
-        // TODO: RewardChoiceDialog → OrderService.checkout(...) 연결
-        boolean eligible = customer.getRewardBalance() >= 10; // 예시
-        boolean useReward = false;
-        if (eligible) {
-            RewardChoiceDialog dlg = new RewardChoiceDialog(
-                    SwingUtilities.getWindowAncestor(this), customer.getRewardBalance(), 10);
-            useReward = dlg.showDialog();
-        }
-        JOptionPane.showMessageDialog(this, "결제 처리 TODO (보상사용=" + useReward + ")");
+    /** 선택 행 삭제(옵션) */
+    public void removeSelected() {
+        int row = table.getSelectedRow();
+        if (row < 0) return;
+        model.removeRow(row);
+        recalcTotal();
     }
 }

@@ -145,7 +145,7 @@ public class UserMainFrame extends JFrame {
         return wrap;
     }
 
- // DB에서 현재 카테고리로 읽어서 카드 구성 (없으면 안내)
+    // DB에서 현재 카테고리로 읽어서 카드 구성 (없으면 안내)
     private void loadFromDao(ItemType type) {
         gridPanel.clear();
         var itemDao = JdbcItemDaoImple.getInstance();
@@ -155,7 +155,7 @@ public class UserMainFrame extends JFrame {
             gridPanel.addCard(new MessageCard("상품이 없습니다."));
         } else {
             for (var vo : items) {
-                gridPanel.addCard(new ItemCard(vo, e -> cartPanel.addItem(vo.getName(), 1, vo.getPrice())));
+                gridPanel.addCard(new ItemCard(vo, e -> cartPanel.addItem(vo, 1)));
             }
         }
         gridPanel.refresh();
@@ -171,7 +171,7 @@ public class UserMainFrame extends JFrame {
             gridPanel.addCard(new MessageCard("검색 결과가 없습니다."));
         } else {
             for (var vo : items) {
-                gridPanel.addCard(new ItemCard(vo, e -> cartPanel.addItem(vo.getName(), 1, vo.getPrice())));
+                gridPanel.addCard(new ItemCard(vo, e -> cartPanel.addItem(vo, 1)));
             }
         }
         gridPanel.refresh();
