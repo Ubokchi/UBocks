@@ -1,5 +1,235 @@
 package bokchi.java.dao.jdbc;
 
-public class JdbcRewardHistoryDaoImple {
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import bokchi.java.config.ConnectionProvider;
+import bokchi.java.config.DBConnManager;
+import bokchi.java.model.RewardHistoryVO;
+import bokchi.java.model.enums.RewardReason;
+
+public class JdbcRewardHistoryDaoImple {
+	// 싱글톤 디자인 패턴 적용
+	private static JdbcRewardHistoryDaoImple instance = null;
+
+	private JdbcRewardHistoryDaoImple() {}
+
+	public static JdbcRewardHistoryDaoImple getInstance() {
+		if (instance == null) {
+			instance = new JdbcRewardHistoryDaoImple();
+		}
+		return instance;
+	}
+	
+	// 공통 매핑
+    private RewardHistoryVO mapRow(ResultSet rs) throws SQLException {
+        RewardHistoryVO vo = new RewardHistoryVO();
+        vo.setHistoryId(rs.getInt("history_id"));
+        vo.setUserId(rs.getInt("user_id"));
+
+        int oid = rs.getInt("order_id");
+        vo.setOrderId(rs.wasNull() ? null : oid);
+
+        vo.setDelta(rs.getInt("delta"));
+        vo.setReason(RewardReason.valueOf(rs.getString("reason")));
+
+        Timestamp ts = rs.getTimestamp("created_at");
+        vo.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
+
+        return vo;
+    }
+
+    /** INSERT (생성된 PK를 VO에 세팅) */
+    public int insert(RewardHistoryVO vo) {
+        int result = 0;
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet keys = null;
+        try {
+            conn = ConnectionProvider.getConnection();
+            String sql = "INSERT INTO reward_history (user_id, order_id, delta, reason) VALUES (?, ?, ?, ?)";
+            ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, vo.getUserId());
+            if (vo.getOrderId() == null) {
+                ps.setNull(2, Types.INTEGER);
+            } else {
+                ps.setInt(2, vo.getOrderId());
+            }
+            ps.setInt(3, vo.getDelta());
+            ps.setString(4, vo.getReason().name());
+
+            result = ps.executeUpdate();
+            if (result == 1) {
+                keys = ps.getGeneratedKeys();
+                if (keys.next()) {
+                    vo.setHistoryId(keys.getInt(1));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try { if (keys != null) keys.close(); } catch (Exception ignore) {}
+            DBConnManager.close(conn, ps);
+        }
+        return result;
+    }
+
+    /** ID로 단건 조회 */
+    public RewardHistoryVO findById(int historyId) {
+        RewardHistoryVO vo = null;
+        Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
+        try {
+            conn = ConnectionProvider.getConnection();
+            String sql = "SELECT * FROM reward_history WHERE history_id = ?";
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, historyId);
+            rs = ps.executeQuery();
+            if (rs.next()) vo = mapRow(rs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBConnManager.close(conn, ps, rs);
+        }
+        return vo;
+    }
+
+    /** 특정 사용자 이력 전체 (최신순) */
+    public List<RewardHistoryVO> findByUserId(int userId) {
+        List<RewardHistoryVO> list = new ArrayList<>();
+        Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
+        try {
+            conn = ConnectionProvider.getConnection();
+            String sql = "SELECT * FROM reward_history WHERE user_id = ? ORDER BY history_id DESC";
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, userId);
+            rs = ps.executeQuery();
+            while (rs.next()) list.add(mapRow(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBConnManager.close(conn, ps, rs);
+        }
+        return list;
+    }
+
+    /** 특정 주문 연동 이력 (주문별 적립/사용 확인) */
+    public List<RewardHistoryVO> findByOrderId(int orderId) {
+        List<RewardHistoryVO> list = new ArrayList<>();
+        Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
+        try {
+            conn = ConnectionProvider.getConnection();
+            String sql = "SELECT * FROM reward_history WHERE order_id = ? ORDER BY history_id DESC";
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, orderId);
+            rs = ps.executeQuery();
+            while (rs.next()) list.add(mapRow(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBConnManager.close(conn, ps, rs);
+        }
+        return list;
+    }
+
+    /** 전체 이력 (관리자 화면용) */
+    public List<RewardHistoryVO> findAll() {
+        List<RewardHistoryVO> list = new ArrayList<>();
+        Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
+        try {
+            conn = ConnectionProvider.getConnection();
+            String sql = "SELECT * FROM reward_history ORDER BY history_id DESC";
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            while (rs.next()) list.add(mapRow(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBConnManager.close(conn, ps, rs);
+        }
+        return list;
+    }
+
+    /** 기간 + 사용자 조건 조회 (필요 시 사용) */
+    public List<RewardHistoryVO> findByUserIdBetween(int userId, LocalDateTime from, LocalDateTime to) {
+        List<RewardHistoryVO> list = new ArrayList<>();
+        Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
+        try {
+            conn = ConnectionProvider.getConnection();
+            String sql =
+                "SELECT * FROM reward_history " +
+                "WHERE user_id = ? AND created_at BETWEEN ? AND ? " +
+                "ORDER BY history_id DESC";
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ps.setTimestamp(2, Timestamp.valueOf(from));
+            ps.setTimestamp(3, Timestamp.valueOf(to));
+            rs = ps.executeQuery();
+            while (rs.next()) list.add(mapRow(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBConnManager.close(conn, ps, rs);
+        }
+        return list;
+    }
+
+    /** 최근 N건 (UI 상단 요약용) */
+    public List<RewardHistoryVO> findRecentByUserId(int userId, int limit) {
+        List<RewardHistoryVO> list = new ArrayList<>();
+        Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
+        try {
+            conn = ConnectionProvider.getConnection();
+            String sql =
+                "SELECT * FROM reward_history WHERE user_id = ? " +
+                "ORDER BY history_id DESC LIMIT ?";
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ps.setInt(2, limit);
+            rs = ps.executeQuery();
+            while (rs.next()) list.add(mapRow(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBConnManager.close(conn, ps, rs);
+        }
+        return list;
+    }
+
+    // --- 편의 메서드: 적립/사용/조정 기록 ---
+
+    public int recordEarn(int userId, Integer orderId, int stamps) {
+        RewardHistoryVO vo = new RewardHistoryVO();
+        vo.setUserId(userId);
+        vo.setOrderId(orderId);
+        vo.setDelta(stamps); // + 적립
+        vo.setReason(RewardReason.EARN);
+        return insert(vo);
+    }
+
+    public int recordRedeem(int userId, Integer orderId, int stampsUsed) {
+        RewardHistoryVO vo = new RewardHistoryVO();
+        vo.setUserId(userId);
+        vo.setOrderId(orderId);
+        vo.setDelta(-Math.abs(stampsUsed)); // - 사용
+        vo.setReason(RewardReason.REDEEM);
+        return insert(vo);
+    }
+
+    public int recordAdjust(int userId, int delta, String noteIgnored) {
+        // note 컬럼이 없다면 무시. 필요하면 스키마/VO에 note 추가해서 확장.
+        RewardHistoryVO vo = new RewardHistoryVO();
+        vo.setUserId(userId);
+        vo.setOrderId(null);
+        vo.setDelta(delta);
+        vo.setReason(RewardReason.ADJUST);
+        return insert(vo);
+    }
 }
