@@ -62,12 +62,12 @@ public class OrderListPanel extends JPanel {
         JPanel top = new JPanel(new BorderLayout());
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        left.add(btnReload);                  // ✅ 기존 기능 유지
+        left.add(btnReload);                 
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         rightPanel.add(new JLabel("새 상태:"));
         rightPanel.add(cbStatus);
-        rightPanel.add(btnChange);            // ✅ 새로 추가
+        rightPanel.add(btnChange);            
 
         top.add(left, BorderLayout.WEST);
         top.add(rightPanel, BorderLayout.EAST);

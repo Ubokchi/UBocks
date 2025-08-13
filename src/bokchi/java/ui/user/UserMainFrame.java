@@ -56,10 +56,10 @@ public class UserMainFrame extends JFrame {
             try (Connection conn = ConnectionProvider.getConnection()) {
                 conn.setAutoCommit(false);
                 try {
-                    // 1) 서버에서 총액 재계산 (신뢰 기준)
+                    // 1) 서버에서 총액 재계산
                     int serverTotal = lines.stream().mapToInt(l -> l.lineAmount).sum();
 
-                    // 2) 주문 생성 (PENDING)
+                    // 2) 주문 생성
                     Integer uid = (cust != null && cust.getUserId() != 0) ? cust.getUserId() : null;
                     int orderId = orderDao.insertOrder(conn, uid, serverTotal);
 
@@ -77,13 +77,13 @@ public class UserMainFrame extends JFrame {
                         }
                     }
 
-                    // 4) 무료 1잔 사용 시 차감 + 리워드 기록(REDEEM)
+                    // 4) 무료 1잔 사용 시 차감 + 리워드 기록
                     if (usedFreeDrink && uid != null) {
                         userDao.addToRewardBalanceGuarded(conn, uid, -JdbcOrderDaoImple.FREE_DRINK_COST);
                         rhDao.recordRedeem(conn, uid, orderId, JdbcOrderDaoImple.FREE_DRINK_COST);
                     }
 
-                    // 5) 스탬프 적립 + 리워드 기록(EARN)
+                    // 5) 스탬프 적립 + 리워드 기록
                     if (uid != null && stampsEarned > 0) {
                         userDao.addToRewardBalance(conn, uid, stampsEarned);
                         rhDao.recordEarn(conn, uid, orderId, stampsEarned);
@@ -108,7 +108,7 @@ public class UserMainFrame extends JFrame {
                         refreshUserBadge();
                     }
 
-                    // 장바구니 비우기 (CartPanel이 내부에서 비우지 않는 구조라면 여기서)
+                    // 장바구니 비우기
                     cartPanel.clearCart();
 
                 } catch (Exception ex) {
@@ -282,15 +282,10 @@ public class UserMainFrame extends JFrame {
         if (customer == null) return;
         try {
             var userDao = JdbcUserDaoImple.getInstance();
-            // 프로젝트에 있는 편한 조회 메서드로 바꿔 쓰세요.
-            // findById가 있으면 그걸 쓰고, 없으면 findByUsername 등으로 대체.
-            var fresh = userDao.findById(customer.getUserId());  // <- 필요 시 findByUsername(...)로 교체
+            var fresh = userDao.findById(customer.getUserId());
 
             if (fresh != null) {
-                // 필요한 필드만 동기화
                 customer.setRewardBalance(fresh.getRewardBalance());
-                // (옵션) 이름 등도 바꾸고 싶으면 갱신
-                // customer.setName(fresh.getName());
 
                 refreshUserBadge();
             } else {

@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface RewardHistoryDao {
 
-    // 기본 CRUD
+    // CRUD
     int insert(RewardHistoryVO vo);
     RewardHistoryVO findById(int historyId);
     List<RewardHistoryVO> findAll();

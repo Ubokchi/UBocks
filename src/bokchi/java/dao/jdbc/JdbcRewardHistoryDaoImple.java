@@ -37,6 +37,7 @@ public class JdbcRewardHistoryDaoImple {
 		return vo;
 	}
 
+	// 삽입
 	public int insert(RewardHistoryVO vo) {
 		int result = 0;
 		Connection conn = null;
@@ -64,6 +65,7 @@ public class JdbcRewardHistoryDaoImple {
 		return result;
 	}
 
+	// 아이디로 조회
 	public RewardHistoryVO findById(int historyId) {
 		RewardHistoryVO vo = null;
 		Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -81,6 +83,7 @@ public class JdbcRewardHistoryDaoImple {
 		return vo;
 	}
 
+	// 유저아이디로 조회
 	public List<RewardHistoryVO> findByUserId(int userId) {
 		List<RewardHistoryVO> list = new ArrayList<>();
 		Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -98,6 +101,7 @@ public class JdbcRewardHistoryDaoImple {
 		return list;
 	}
 
+	// 오더아이디로 조회
 	public List<RewardHistoryVO> findByOrderId(int orderId) {
 		List<RewardHistoryVO> list = new ArrayList<>();
 		Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -115,6 +119,7 @@ public class JdbcRewardHistoryDaoImple {
 		return list;
 	}
 
+	// 전체 조회
 	public List<RewardHistoryVO> findAll() {
 		List<RewardHistoryVO> list = new ArrayList<>();
 		Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -131,6 +136,7 @@ public class JdbcRewardHistoryDaoImple {
 		return list;
 	}
 
+	// 기간 조회
 	public List<RewardHistoryVO> findByUserIdBetween(int userId, LocalDateTime from, LocalDateTime to) {
 		List<RewardHistoryVO> list = new ArrayList<>();
 		Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -151,6 +157,7 @@ public class JdbcRewardHistoryDaoImple {
 		return list;
 	}
 
+	// 최근 조회
 	public List<RewardHistoryVO> findRecentByUserId(int userId, int limit) {
 		List<RewardHistoryVO> list = new ArrayList<>();
 		Connection conn = null; PreparedStatement ps = null; ResultSet rs = null;
@@ -199,7 +206,6 @@ public class JdbcRewardHistoryDaoImple {
 	}
 
 	// Connection을 외부에서 넘김
-
 	public int insert(Connection conn, RewardHistoryVO vo) throws SQLException {
 		String sql = "INSERT INTO reward_history (user_id, order_id, delta, reason) VALUES (?, ?, ?, ?)";
 		try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {

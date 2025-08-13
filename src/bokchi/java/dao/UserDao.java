@@ -17,12 +17,12 @@ public interface UserDao {
     int updateBasic(UserVO vo) throws SQLException;
     int delete(int userId) throws SQLException;
 
-    // 리워드(스탬프) 관련 — 트랜잭션에서 쓰기 위해 Connection 받는 버전
+    // 리워드(스탬프) 관련 — Connection 받는 버전
     void addToRewardBalanceGuarded(Connection conn, int userId, int delta) throws SQLException;
     void addToRewardBalance(Connection conn, int userId, int delta) throws SQLException;
     int  getRewardBalance(Connection conn, int userId) throws SQLException;
 
-    // (선택) Auto-connection 헬퍼 — 트랜잭션 외부 간단 호출용
+    // 호출용
     void addToRewardBalanceGuarded(int userId, int delta) throws SQLException;
     void addToRewardBalance(int userId, int delta) throws SQLException;
 }

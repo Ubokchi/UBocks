@@ -229,7 +229,7 @@ public class CartPanel extends JPanel {
                 if (freeDrinkItemId == null) {
                     JOptionPane.showMessageDialog(this, "무료 적용 대상을 선택하지 않았습니다.");
                 } else {
-                    // 화면 표시용: 장바구니에 0원 라인 추가(결제 금액/합계 갱신)
+                    // 장바구니에 0원 라인 추가(결제 금액/합계 갱신)
                     if (applyFreeToCart(freeDrinkItemId)) {
                         usedFreeDrink = true;
                     } else {
@@ -247,10 +247,8 @@ public class CartPanel extends JPanel {
             return;
         }
 
-        // DB/트랜잭션은 외부로 위임
         checkoutListener.onCheckout(customer, snapshotLines(), getTotal(), usedFreeDrink, freeDrinkItemId);
 
-        // 성공 시 장바구니 비우기(외부에서 성공여부 판단 후 호출하고 싶으면 clearCart()를 밖에서 호출해도 됨)
         clearCart();
     }
 

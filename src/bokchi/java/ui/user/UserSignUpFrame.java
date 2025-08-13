@@ -46,8 +46,8 @@ public class UserSignUpFrame extends JFrame {
         root.add(buildCard(), BorderLayout.CENTER);
         return root;
     }
-
-    /** 상단 헤더(로그인과 동일 스타일, 높이 72) */
+    
+    //헤더
     private JComponent buildHeader() {
         JPanel header = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
@@ -82,7 +82,7 @@ public class UserSignUpFrame extends JFrame {
         return header;
     }
 
-    /** 중앙 카드(라운드+그림자) + 폼 */
+    //중앙
     private JComponent buildCard() {
         JPanel wrap = new JPanel(new GridBagLayout());
         wrap.setOpaque(false);
@@ -251,7 +251,7 @@ public class UserSignUpFrame extends JFrame {
                 tfPhone.requestFocus();
                 return;
             }
-            // 형식 가벼운 안내 (선택)
+            // 형식 안내
             if (!phone.matches("\\d{2,3}-\\d{3,4}-\\d{4}") && !phone.matches("\\d{10,11}")) {
                 int ans = JOptionPane.showConfirmDialog(this, "전화번호 형식이 일반적이지 않습니다. 계속 확인할까요?",
                         "확인", JOptionPane.YES_NO_OPTION);
@@ -275,7 +275,7 @@ public class UserSignUpFrame extends JFrame {
         });
     }
 
-    // ================= 가입 로직(기존과 동일) =================
+    // 가입
     private void onSignUp(ActionEvent e) {
         String username = tfUsername.getText().trim();
         String pw1 = new String(pfPassword.getPassword());
@@ -298,7 +298,6 @@ public class UserSignUpFrame extends JFrame {
             if (ans != JOptionPane.YES_OPTION) return;
         }
 
-        // UserVO 생성
         UserVO vo = new UserVO();
         vo.setUsername(username);
         vo.setPassword(pw1);
