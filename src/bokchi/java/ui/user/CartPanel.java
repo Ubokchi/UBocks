@@ -19,7 +19,7 @@ public class CartPanel extends JPanel {
     private final JButton btnCheckout = new JButton("결제");
 
     private final UserVO customer;
-    private CheckoutListener checkoutListener; // 결제 콜백(외부 주입)
+    private CheckoutListener checkoutListener; // 결제
 
     public CartPanel(UserVO customer) {
         this.customer = customer;
@@ -80,19 +80,19 @@ public class CartPanel extends JPanel {
         btnCheckout.addActionListener(e -> onCheckout());
     }
 
-    /** 외부에서 결제 로직 연결 */
+    // 결제 연결
     public void setCheckoutListener(CheckoutListener listener) {
         this.checkoutListener = listener;
     }
 
-    /** 컬럼 숨기기 */
+    // 숨기기
     private void hideColumn(int index) {
         table.getColumnModel().getColumn(index).setMinWidth(0);
         table.getColumnModel().getColumn(index).setMaxWidth(0);
         table.getColumnModel().getColumn(index).setWidth(0);
     }
 
-    /** 장바구니에 상품 추가 */
+    // 장바구니 추가
     public void addItem(ItemVO vo, int qty) {
         if (!vo.isActive()) { JOptionPane.showMessageDialog(this, "판매 중이 아닌 상품입니다."); return; }
         if (vo.getStock() <= 0) { JOptionPane.showMessageDialog(this, "재고가 없습니다."); return; }
@@ -128,7 +128,7 @@ public class CartPanel extends JPanel {
         recalcTotal();
     }
 
-    /** 선택 행 삭제 */
+    // 선택 행 삭제
     public void removeSelected() {
         int row = table.getSelectedRow();
         if (row < 0) {
@@ -139,7 +139,7 @@ public class CartPanel extends JPanel {
         recalcTotal();
     }
 
-    /** 전체 비우기 (확인 다이얼로그 포함) */
+    // 전체 비우기 + 다이얼로ㄱ,
     public void clearAll() {
         if (model.getRowCount() == 0) return;
         int ok = JOptionPane.showConfirmDialog(this, "장바구니를 모두 비울까요?", "확인", JOptionPane.YES_NO_OPTION);
@@ -149,13 +149,13 @@ public class CartPanel extends JPanel {
         }
     }
 
-    /** 외부에서 바로 비우기 */
+    //바로 비우기
     public void clearCart() {
         model.setRowCount(0);
         recalcTotal();
     }
 
-    /** 수량 변경 시 재고 한도 강제 + 금액/합계 재계산 */
+    // 재고 한도
     private void enforceStockAndRecalc() {
         for (int r = 0; r < model.getRowCount(); r++) {
             int qty   = (Integer) model.getValueAt(r, 1);
@@ -175,12 +175,12 @@ public class CartPanel extends JPanel {
         recalcTotal();
     }
 
-    /** 총 금액 계산 */
+    // 총 금액 계산
     private void recalcTotal() {
         lbTotal.setText("총 금액: " + getTotal() + "원");
     }
 
-    /** 현재 합계 반환 */
+    // 현재 합계 라인
     public int getTotal() {
         int total = 0;
         for (int r = 0; r < model.getRowCount(); r++) {
@@ -189,7 +189,7 @@ public class CartPanel extends JPanel {
         return total;
     }
 
-    /** 주문에 쓸 스냅샷 라인 추출 */
+    // 스냡샷 라인 추출
     public List<CartLine> snapshotLines() {
         List<CartLine> lines = new ArrayList<>();
         for (int r = 0; r < model.getRowCount(); r++) {
@@ -203,7 +203,7 @@ public class CartPanel extends JPanel {
         return lines;
     }
 
-    /** 결제 버튼: UI에서 무료쿠폰 적용/확인만 처리 → 콜백 호출 */
+    // 결제 버튼 - UI에서 무료쿠폰 적용/확인만 처리
     private void onCheckout() {
         if (model.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "장바구니가 비어 있습니다.");
@@ -254,7 +254,7 @@ public class CartPanel extends JPanel {
         clearCart();
     }
 
-    /** 장바구니에서 itemId 대상 라인에 '1잔 무료' 적용: 원 라인 qty-1, 0원 라인 +1 추가 */
+    // 장바구니에서 itemId 대상 라인에 '1잔 무료' 적용: 원 라인 qty-1, 0원 라인 +1 추가
     private boolean applyFreeToCart(int itemId) {
         for (int r = 0; r < model.getRowCount(); r++) {
             int rid = (Integer) model.getValueAt(r, 3);   // itemId
@@ -285,7 +285,7 @@ public class CartPanel extends JPanel {
         return false;
     }
 
-    /** 결제 콜백 인터페이스 (DB는 여기서 하지 않음) */
+    // 결제 콜백 인터페이스
     public interface CheckoutListener {
         void onCheckout(UserVO customer,
                         List<CartLine> lines,
@@ -293,8 +293,8 @@ public class CartPanel extends JPanel {
                         boolean usedFreeDrink,
                         Integer freeDrinkItemId);
     }
-
-    /** 스냅샷용 라인 DTO */
+    
+    // 스냅샷용
     public static class CartLine {
         public final int itemId;
         public final String name;

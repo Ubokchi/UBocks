@@ -16,11 +16,11 @@ public class StaffMainFrame extends JFrame {
 		setSize(900, 600);
 		setLocationRelativeTo(null);
 
-		// StaffMainFrame.java 일부
+		// StaffMainFrame.java
 		var tab = new JTabbedPane();
 		tab.addTab("상품관리", new ItemManagePanel());
-		tab.addTab("주문조회", new JLabel("TODO: OrderListPanel"));
-		tab.addTab("리워드이력", new JLabel("TODO: RewardHistoryPanel"));
+		tab.addTab("주문조회", new OrderListPanel());
+		tab.addTab("리워드이력", new RewardHistoryPanel());
 
 		// 상단 패널
 		var top = new JPanel(new BorderLayout());

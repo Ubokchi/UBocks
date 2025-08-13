@@ -9,6 +9,7 @@ import java.awt.*;
 
 public class UserMainFrame extends JFrame {
     private final UserVO customer;
+    private JLabel lbUser;
 
     // 테마 컬러 (스타벅스 그린 톤)
     private static final Color BRAND = new Color(0x006241);
@@ -41,22 +42,34 @@ public class UserMainFrame extends JFrame {
         loadFromDao(currentType);
         
         cartPanel.setCheckoutListener((cust, lines, total, usedFreeDrink, freeDrinkItemId) -> {
-            var service = new bokchi.java.service.JdbcCheckoutService();
             try {
-                var result = service.checkout(cust, lines, total, usedFreeDrink, freeDrinkItemId);
+                // ★ 서비스 대신 DAO의 checkout 사용
+                var orderDao = bokchi.java.dao.jdbc.JdbcOrderDaoImple.getInstance();
+                var result = orderDao.checkout(cust, lines, total, usedFreeDrink, freeDrinkItemId);
+
                 JOptionPane.showMessageDialog(this,
                     "결제가 완료되었습니다.\n주문번호: " + result.orderId() +
                     "\n합계: " + result.totalAmount() + "원\n적립 스탬프: " + result.stampsEarned() + "개" +
                     (result.usedFreeDrink() ? "\n무료 음료 1잔 사용" : "")
                 );
 
-                // 성공 시 장바구니 비우기
+                // (선택) 상단 사용자 스탬프 라벨 갱신
+                if (cust != null) {
+                    int delta = result.stampsEarned()
+                               - (result.usedFreeDrink() ? bokchi.java.dao.jdbc.JdbcOrderDaoImple.FREE_DRINK_COST : 0);
+                    cust.setRewardBalance(cust.getRewardBalance() + delta);
+                    if (lbUser != null) {
+                        lbUser.setText(cust.getName() + " 님 · 스탬프 " + cust.getRewardBalance());
+                    }
+                }
+
+                // 장바구니 비우기 (CartPanel이 자동으로 비우지 않는 구조라면 유지)
                 cartPanel.clearCart();
-                
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "결제 실패: " + ex.getMessage());
-                // 실패 시 장바구니는 유지
+                // 실패 시 장바구니 유지
             }
         });
     }

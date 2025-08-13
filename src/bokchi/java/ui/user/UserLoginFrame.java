@@ -255,21 +255,6 @@ public class UserLoginFrame extends JFrame {
             }
         });
 
-        // 시각적 힌트(개발용): 히트박스 표시를 원하면 주석 해제
-        /*
-        glass = (JComponent) rp.getGlassPane();
-        glass.setLayout(null);
-        JLabel hint = new JLabel();
-        hint.setOpaque(true);
-        hint.setBackground(new Color(255,255,255,40));
-        hint.setBounds(glass.getWidth()-HITBOX,0,HITBOX,HITBOX);
-        glass.addComponentListener(new ComponentAdapter() {
-            public void componentResized(ComponentEvent e) {
-                hint.setBounds(glass.getWidth()-HITBOX,0,HITBOX,HITBOX);
-            }
-        });
-        glass.add(hint);
-        */
     }
 
     private void switchToStaffLogin() {
