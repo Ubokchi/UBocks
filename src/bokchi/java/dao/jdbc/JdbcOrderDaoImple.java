@@ -27,7 +27,7 @@ public class JdbcOrderDaoImple {
 	}
 
 	// 주문 추가
-	int insert(OrderVO order) {
+	public int insert(OrderVO order) {
 		int result = 0;
         Connection conn = null;
         PreparedStatement ps = null;
@@ -60,7 +60,7 @@ public class JdbcOrderDaoImple {
 	}
 
 	// 주문 ID로 검색
-	OrderVO findById(int orderId) {
+	public OrderVO findById(int orderId) {
 		Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -84,7 +84,7 @@ public class JdbcOrderDaoImple {
 	}
 
 	// 전체 주문 조회
-	List<OrderVO> findAll() {
+	public List<OrderVO> findAll() {
 		List<OrderVO> list = new ArrayList<>();
         Connection conn = null;
         PreparedStatement ps = null;
@@ -108,7 +108,7 @@ public class JdbcOrderDaoImple {
 	}
 	
 	// 특정 유저 주문 조회
-	List<OrderVO> findByUserId(int userId) {
+	public List<OrderVO> findByUserId(int userId) {
 		List<OrderVO> list = new ArrayList<>();
         Connection conn = null;
         PreparedStatement ps = null;
@@ -133,7 +133,7 @@ public class JdbcOrderDaoImple {
 	}
 
 	// 주문 상태 변경
-	int updateStatus(int orderId, String status) {
+	public int updateStatus(int orderId, String status) {
 		Connection conn = null;
         PreparedStatement ps = null;
         try {

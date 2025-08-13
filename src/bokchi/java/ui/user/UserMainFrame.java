@@ -40,11 +40,24 @@ public class UserMainFrame extends JFrame {
         // 초기 로드
         loadFromDao(currentType);
         
-        cartPanel.setCheckoutListener((cust, lines, total) -> {
-            // TODO: OrderService.checkout(cust, lines, total) 호출
-            // 결제 성공 시:
-            JOptionPane.showMessageDialog(this, "결제가 완료되었습니다. 합계: " + total + "원");
-            cartPanel.clearCart(); // 비우기
+        cartPanel.setCheckoutListener((cust, lines, total, usedFreeDrink, freeDrinkItemId) -> {
+            var service = new bokchi.java.service.JdbcCheckoutService();
+            try {
+                var result = service.checkout(cust, lines, total, usedFreeDrink, freeDrinkItemId);
+                JOptionPane.showMessageDialog(this,
+                    "결제가 완료되었습니다.\n주문번호: " + result.orderId() +
+                    "\n합계: " + result.totalAmount() + "원\n적립 스탬프: " + result.stampsEarned() + "개" +
+                    (result.usedFreeDrink() ? "\n무료 음료 1잔 사용" : "")
+                );
+
+                // 성공 시 장바구니 비우기
+                cartPanel.clearCart();
+                
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "결제 실패: " + ex.getMessage());
+                // 실패 시 장바구니는 유지
+            }
         });
     }
 

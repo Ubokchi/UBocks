@@ -22,7 +22,7 @@ public class ItemCard extends JPanel {
         ));
 
         // TODO : (옵션) 이미지 자리 — 현재는 placeholder
-        JLabel thumb = new JLabel("IMG", SwingConstants.CENTER);
+        JLabel thumb = new JLabel("ITEM", SwingConstants.CENTER);
         thumb.setPreferredSize(new Dimension(72, 72));
         thumb.setOpaque(true);
         thumb.setBackground(new Color(0xF0F0F0));
