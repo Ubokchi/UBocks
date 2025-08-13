@@ -155,15 +155,19 @@ public class UserMainFrame extends JFrame {
         center.add(tfSearch);
         center.add(btnSearch);
 
-        // 우측: 사용자/로그아웃
+        // 우측: 사용자/로그아웃 (+ 새로고침)
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
         lbUser = new JLabel(userBadgeText());
+        refreshUserFromDb();
+
         JButton btnLogout = new JButton("로그아웃");
         btnLogout.addActionListener(e -> {
             dispose();
             SwingUtilities.invokeLater(() -> new UserLoginFrame().setVisible(true));
         });
+
+        // 추가된 새로고침 버튼을 라벨 옆에 배치
         right.add(lbUser);
         right.add(btnLogout);
 
@@ -270,6 +274,31 @@ public class UserMainFrame extends JFrame {
     private void refreshUserBadge() {
         if (lbUser != null) {
             lbUser.setText(userBadgeText());
+        }
+    }
+    
+    // 상단 라벨 갱신
+    private void refreshUserFromDb() {
+        if (customer == null) return;
+        try {
+            var userDao = JdbcUserDaoImple.getInstance();
+            // 프로젝트에 있는 편한 조회 메서드로 바꿔 쓰세요.
+            // findById가 있으면 그걸 쓰고, 없으면 findByUsername 등으로 대체.
+            var fresh = userDao.findById(customer.getUserId());  // <- 필요 시 findByUsername(...)로 교체
+
+            if (fresh != null) {
+                // 필요한 필드만 동기화
+                customer.setRewardBalance(fresh.getRewardBalance());
+                // (옵션) 이름 등도 바꾸고 싶으면 갱신
+                // customer.setName(fresh.getName());
+
+                refreshUserBadge();
+            } else {
+                JOptionPane.showMessageDialog(this, "사용자 정보를 찾을 수 없습니다.");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "스탬프 갱신 실패: " + ex.getMessage());
         }
     }
 }
