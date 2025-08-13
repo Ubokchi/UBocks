@@ -1,17 +1,22 @@
 package bokchi.java.ui.user;
 
-import bokchi.java.model.UserVO;
 import bokchi.java.dao.jdbc.JdbcItemDaoImple;
+import bokchi.java.dao.jdbc.JdbcOrderDaoImple;
+import bokchi.java.dao.jdbc.JdbcRewardHistoryDaoImple;
+import bokchi.java.dao.jdbc.JdbcUserDaoImple;
+import bokchi.java.config.ConnectionProvider;
+import bokchi.java.model.UserVO;
 import bokchi.java.model.enums.ItemType;
+import bokchi.java.model.enums.OrderStatus;
 
 import javax.swing.*;
 import java.awt.*;
+import java.sql.Connection;
 
 public class UserMainFrame extends JFrame {
     private final UserVO customer;
-    private JLabel lbUser;
 
-    // 테마 컬러 (스타벅스 그린 톤)
+    // 테마 컬러 (스타벅스 그린)
     private static final Color BRAND = new Color(0x006241);
     private static final Color BG = new Color(0xF7F7F7);
 
@@ -23,7 +28,10 @@ public class UserMainFrame extends JFrame {
     private final ItemGridPanel gridPanel = new ItemGridPanel();
     private final CartPanel cartPanel;
 
-    // 현재 선택된 카테고리
+    // 상단 사용자 표시 라벨 (스탬프 갱신용)
+    private JLabel lbUser;
+
+    // 현재 카테고리
     private ItemType currentType = ItemType.DRINK;
 
     public UserMainFrame(UserVO customer) {
@@ -38,34 +46,77 @@ public class UserMainFrame extends JFrame {
 
         setContentPane(buildRoot());
 
-        // 초기 로드
         loadFromDao(currentType);
-        
+
         cartPanel.setCheckoutListener((cust, lines, total, usedFreeDrink, freeDrinkItemId) -> {
-            try {
-                // ★ 서비스 대신 DAO의 checkout 사용
-                var orderDao = bokchi.java.dao.jdbc.JdbcOrderDaoImple.getInstance();
-                var result = orderDao.checkout(cust, lines, total, usedFreeDrink, freeDrinkItemId);
+            var orderDao  = JdbcOrderDaoImple.getInstance();
+            var userDao   = JdbcUserDaoImple.getInstance();
+            var rhDao     = JdbcRewardHistoryDaoImple.getInstance();
 
-                JOptionPane.showMessageDialog(this,
-                    "결제가 완료되었습니다.\n주문번호: " + result.orderId() +
-                    "\n합계: " + result.totalAmount() + "원\n적립 스탬프: " + result.stampsEarned() + "개" +
-                    (result.usedFreeDrink() ? "\n무료 음료 1잔 사용" : "")
-                );
+            try (Connection conn = ConnectionProvider.getConnection()) {
+                conn.setAutoCommit(false);
+                try {
+                    // 1) 서버에서 총액 재계산 (신뢰 기준)
+                    int serverTotal = lines.stream().mapToInt(l -> l.lineAmount).sum();
 
-                // (선택) 상단 사용자 스탬프 라벨 갱신
-                if (cust != null) {
-                    int delta = result.stampsEarned()
-                               - (result.usedFreeDrink() ? bokchi.java.dao.jdbc.JdbcOrderDaoImple.FREE_DRINK_COST : 0);
-                    cust.setRewardBalance(cust.getRewardBalance() + delta);
-                    if (lbUser != null) {
-                        lbUser.setText(cust.getName() + " 님 · 스탬프 " + cust.getRewardBalance());
+                    // 2) 주문 생성 (PENDING)
+                    Integer uid = (cust != null && cust.getUserId() != 0) ? cust.getUserId() : null;
+                    int orderId = orderDao.insertOrder(conn, uid, serverTotal);
+
+                    // 3) 항목 저장/재고차감/스탬프 적립 계산
+                    int stampsEarned = 0;
+                    for (var l : lines) {
+                        orderDao.insertOrderItem(conn, orderId, l.itemId, l.qty, l.unitPrice);
+
+                        boolean ok = orderDao.decrementStockIfEnough(conn, l.itemId, l.qty);
+                        if (!ok) throw new RuntimeException("재고 부족/동시성 충돌: item_id=" + l.itemId);
+
+                        boolean eligible = orderDao.isStampEligible(conn, l.itemId);
+                        if (eligible && l.unitPrice > 0) {
+                            stampsEarned += l.qty; // 1잔당 1개
+                        }
                     }
+
+                    // 4) 무료 1잔 사용 시 차감 + 리워드 기록(REDEEM)
+                    if (usedFreeDrink && uid != null) {
+                        userDao.addToRewardBalanceGuarded(conn, uid, -JdbcOrderDaoImple.FREE_DRINK_COST);
+                        rhDao.recordRedeem(conn, uid, orderId, JdbcOrderDaoImple.FREE_DRINK_COST);
+                    }
+
+                    // 5) 스탬프 적립 + 리워드 기록(EARN)
+                    if (uid != null && stampsEarned > 0) {
+                        userDao.addToRewardBalance(conn, uid, stampsEarned);
+                        rhDao.recordEarn(conn, uid, orderId, stampsEarned);
+                    }
+
+                    // 6) 주문 상태 PAID
+                    orderDao.updateOrderStatus(conn, orderId, OrderStatus.PAID);
+
+                    conn.commit();
+
+                    // 성공 안내
+                    JOptionPane.showMessageDialog(this,
+                            "결제가 완료되었습니다.\n주문번호: " + orderId +
+                            "\n합계: " + serverTotal + "원\n적립 스탬프: " + stampsEarned + "개" +
+                            (usedFreeDrink ? "\n무료 음료 1잔 사용" : "")
+                    );
+
+                    // (선택) 상단 사용자 스탬프 라벨 갱신
+                    if (cust != null) {
+                        int delta = stampsEarned - (usedFreeDrink ? JdbcOrderDaoImple.FREE_DRINK_COST : 0);
+                        cust.setRewardBalance(cust.getRewardBalance() + delta);
+                        refreshUserBadge();
+                    }
+
+                    // 장바구니 비우기 (CartPanel이 내부에서 비우지 않는 구조라면 여기서)
+                    cartPanel.clearCart();
+
+                } catch (Exception ex) {
+                    try { conn.rollback(); } catch (Exception ignore) {}
+                    throw ex;
+                } finally {
+                    try { conn.setAutoCommit(true); } catch (Exception ignore) {}
                 }
-
-                // 장바구니 비우기 (CartPanel이 자동으로 비우지 않는 구조라면 유지)
-                cartPanel.clearCart();
-
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "결제 실패: " + ex.getMessage());
@@ -107,7 +158,7 @@ public class UserMainFrame extends JFrame {
         // 우측: 사용자/로그아웃
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
-        JLabel lbUser = new JLabel(customer.getName() + " 님 · 스탬프 " + customer.getRewardBalance());
+        lbUser = new JLabel(userBadgeText());
         JButton btnLogout = new JButton("로그아웃");
         btnLogout.addActionListener(e -> {
             dispose();
@@ -156,7 +207,7 @@ public class UserMainFrame extends JFrame {
 
         // 카테고리 변경 시 DB에서 다시 로드
         btnDrink.addActionListener(e -> { currentType = ItemType.DRINK; loadFromDao(currentType); });
-        btnFood.addActionListener(e -> { currentType = ItemType.FOOD;  loadFromDao(currentType); });
+        btnFood .addActionListener(e -> { currentType = ItemType.FOOD;  loadFromDao(currentType); });
         btnGoods.addActionListener(e -> { currentType = ItemType.GOODS; loadFromDao(currentType); });
 
         side.add(cat);
@@ -208,5 +259,17 @@ public class UserMainFrame extends JFrame {
             }
         }
         gridPanel.refresh();
+    }
+
+    // 상단 사용자 배지 텍스트
+    private String userBadgeText() {
+        return customer.getName() + " 님 · 스탬프 " + customer.getRewardBalance();
+    }
+
+    // 상단 사용자 라벨 갱신
+    private void refreshUserBadge() {
+        if (lbUser != null) {
+            lbUser.setText(userBadgeText());
+        }
     }
 }

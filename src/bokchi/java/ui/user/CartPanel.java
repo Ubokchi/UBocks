@@ -285,7 +285,7 @@ public class CartPanel extends JPanel {
         return false;
     }
 
-    // 결제 콜백 인터페이스
+    // 결제 인터페이스
     public interface CheckoutListener {
         void onCheckout(UserVO customer,
                         List<CartLine> lines,
