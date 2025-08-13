@@ -229,4 +229,21 @@ public class JdbcUserDaoImple {
             DBConnManager.close(conn, null);
         }
     }
+    
+    public UserVO findByPhone(String phone) {
+        Connection conn=null; PreparedStatement ps=null; ResultSet rs=null;
+        try {
+            conn = ConnectionProvider.getConnection();
+            ps = conn.prepareStatement("SELECT * FROM users WHERE phone = ?");
+            ps.setString(1, phone);
+            rs = ps.executeQuery();
+            if (rs.next()) return mapRow(rs); // 기존 mapRow 재사용
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            DBConnManager.close(conn, ps, rs);
+        }
+    }
 }

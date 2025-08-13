@@ -10,6 +10,7 @@ public interface UserDao {
     // 조회
     UserVO findByUsername(String username);
     UserVO findById(int userId);
+    UserVO findByPhone(String phone);
 
     // 생성 / 수정 / 삭제
     int insert(UserVO vo) throws SQLException;

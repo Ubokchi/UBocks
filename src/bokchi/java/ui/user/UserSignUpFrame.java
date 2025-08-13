@@ -19,6 +19,9 @@ public class UserSignUpFrame extends JFrame {
     private final JCheckBox cbShowPw = new JCheckBox("비밀번호 표시");
     private final JButton btnSignUp = new JButton("가입");
     private final JButton btnCancel = new JButton("취소");
+    // 중복체크 버튼
+    private final JButton btnCheckId = new JButton("중복체크");
+    private final JButton btnCheckPhone = new JButton("중복체크");
 
     // 브랜드 컬러 (로그인과 동일 톤)
     private static final Color BRAND = new Color(0x006241);
@@ -126,7 +129,12 @@ public class UserSignUpFrame extends JFrame {
         c.gridx = 1;
         tfUsername.setToolTipText("예: bokchi123");
         tfUsername.setBorder(fieldBorder);
-        card.add(tfUsername, c);
+        
+        JPanel idRow = new JPanel(new BorderLayout(6, 0));
+        idRow.setOpaque(false);
+        idRow.add(tfUsername, BorderLayout.CENTER);
+        idRow.add(btnCheckId, BorderLayout.EAST);
+        card.add(idRow, c);
 
         // 비밀번호
         c.gridx = 0; c.gridy++;
@@ -166,7 +174,12 @@ public class UserSignUpFrame extends JFrame {
         c.gridx = 1;
         tfPhone.setToolTipText("예: 010-1234-5678 또는 01012345678");
         tfPhone.setBorder(fieldBorder);
-        card.add(tfPhone, c);
+        
+        JPanel phoneRow = new JPanel(new BorderLayout(6, 0));
+        phoneRow.setOpaque(false);
+        phoneRow.add(tfPhone, BorderLayout.CENTER);
+        phoneRow.add(btnCheckPhone, BorderLayout.EAST);
+        card.add(phoneRow, c);
 
         // 버튼 행
         c.gridx = 0; c.gridy++;
@@ -208,6 +221,58 @@ public class UserSignUpFrame extends JFrame {
     private void wireEvents() {
         btnSignUp.addActionListener(this::onSignUp);
         btnCancel.addActionListener(e -> dispose());
+        
+        btnCheckId.addActionListener(e -> {
+            String username = tfUsername.getText().trim();
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "아이디를 입력하세요.");
+                tfUsername.requestFocus();
+                return;
+            }
+            try {
+                var dao = JdbcUserDaoImple.getInstance();
+                var exists = dao.findByUsername(username) != null; // existsByUsername 있으면 그걸 써도 OK
+                if (exists) {
+                    JOptionPane.showMessageDialog(this, "이미 사용 중인 아이디입니다.");
+                    tfUsername.requestFocus();
+                } else {
+                    JOptionPane.showMessageDialog(this, "사용 가능한 아이디입니다.");
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "중복체크 오류: " + ex.getMessage());
+            }
+        });
+
+        btnCheckPhone.addActionListener(e -> {
+            String phone = tfPhone.getText().trim();
+            if (phone.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "전화번호를 입력하세요.");
+                tfPhone.requestFocus();
+                return;
+            }
+            // 형식 가벼운 안내 (선택)
+            if (!phone.matches("\\d{2,3}-\\d{3,4}-\\d{4}") && !phone.matches("\\d{10,11}")) {
+                int ans = JOptionPane.showConfirmDialog(this, "전화번호 형식이 일반적이지 않습니다. 계속 확인할까요?",
+                        "확인", JOptionPane.YES_NO_OPTION);
+                if (ans != JOptionPane.YES_OPTION) return;
+            }
+            try {
+                var dao = JdbcUserDaoImple.getInstance();
+                var dup = dao.findByPhone(phone) != null; // existsByPhone(...)이 있으면 그걸 써도 OK
+                if (dup) {
+                    JOptionPane.showMessageDialog(this, "이미 등록된 전화번호입니다.");
+                    tfPhone.requestFocus();
+                } else {
+                    JOptionPane.showMessageDialog(this, "사용 가능한 전화번호입니다.");
+                }
+            } catch (NoSuchMethodError err) {
+                JOptionPane.showMessageDialog(this, "전화번호 조회 메서드가 없습니다. JdbcUserDaoImple에 findByPhone(String)을 추가하세요.");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "중복체크 오류: " + ex.getMessage());
+            }
+        });
     }
 
     // ================= 가입 로직(기존과 동일) =================
