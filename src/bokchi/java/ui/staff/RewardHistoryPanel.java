@@ -66,7 +66,6 @@ public class RewardHistoryPanel extends JPanel {
         btnAll.addActionListener(e -> loadAll());
 
         // 초기: 비움
-        // 필요하면 loadAll()이나 안내 메시지 띄우기 가능
     }
 
     private void doSearch() {
@@ -96,7 +95,6 @@ public class RewardHistoryPanel extends JPanel {
             if (!fromText.isEmpty() && !toText.isEmpty()) {
                 LocalDate from = LocalDate.parse(fromText);
                 LocalDate to   = LocalDate.parse(toText);
-                // to 의 하루 끝까지 포함하고 싶다면 plusDays(1) - 1초 처리 등 서비스단에서 수행 가능
                 list = dao.findByUserIdBetween(userId, from.atStartOfDay(), to.plusDays(1).atStartOfDay());
             } else {
                 list = dao.findByUserId(userId);

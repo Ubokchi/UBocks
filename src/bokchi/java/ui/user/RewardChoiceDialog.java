@@ -1,4 +1,3 @@
-// src/bokchi/java/ui/user/RewardCartChoiceDialog.java
 package bokchi.java.ui.user;
 
 import bokchi.java.dao.jdbc.JdbcItemDaoImple;

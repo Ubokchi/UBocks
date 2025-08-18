@@ -1,4 +1,3 @@
-// src/bokchi/java/ui/user/MessageCard.java
 package bokchi.java.ui.user;
 
 import javax.swing.*;

@@ -22,7 +22,7 @@ public class UserLoginFrame extends JFrame {
 
     // 비밀 전환용
     private static final int HITBOX = 48;          // 오른쪽-위 48px 정사각형
-    private static final int LONG_PRESS_MS = 5000; // 5초
+    private static final int LONG_PRESS_MS = 3000; // 3초
 
     // 브랜드 컬러
     private static final Color BRAND = new Color(0x006241);
@@ -30,19 +30,19 @@ public class UserLoginFrame extends JFrame {
     private static final Color BG = new Color(0xF6F7F6);
 
     public UserLoginFrame() {
-        super("Bokchi Coffee · 로그인");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        super("Star Bokchi · 로그인");
+        setDefaultCloseOperation(EXIT_ON_CLOSE); // 창을 닫을 때 프로그램 종료
         setSize(480, 520);
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(null);	// 화면 정중앙에 띄움
 
         setContentPane(buildRoot());
-        installSecretSwitchOverlay();
+        installSecretSwitchOverlay();	// 3초 롱프레스 비밀 스위치
 
-        btnLogin.addActionListener(this::onLogin);
+        btnLogin.addActionListener(this::onLogin);	// 로그인 버튼 누르면 onLogin 실행
         btnSignUp.addActionListener(e ->
                 SwingUtilities.invokeLater(() -> new UserSignUpFrame().setVisible(true))
-        );
-        getRootPane().setDefaultButton(btnLogin);
+        );	// 회원가입 버튼 누르면 회원가입 창 띄움
+        getRootPane().setDefaultButton(btnLogin);	// 엔터 키를 누르면 로그인
     }
 
     private JComponent buildRoot() {
@@ -96,78 +96,67 @@ public class UserLoginFrame extends JFrame {
 
         JPanel card = new JPanel(new GridBagLayout()) {
             @Override protected void paintComponent(Graphics g) {
-                // 부드러운 라운드 카드 + 그림자 느낌
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // 그림자
                 g2.setColor(new Color(0,0,0,25));
                 g2.fillRoundRect(6, 8, getWidth()-12, getHeight()-12, 20, 20);
-
-                // 바탕
                 g2.setColor(Color.WHITE);
                 g2.fillRoundRect(0, 0, getWidth()-12, getHeight()-12, 20, 20);
                 g2.dispose();
-
                 super.paintComponent(g);
             }
-
             @Override public boolean isOpaque() { return false; }
         };
         card.setBorder(BorderFactory.createEmptyBorder(28, 32, 24, 32));
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(6, 6, 6, 6);
-        c.gridx = 0; c.gridy = 0; c.gridwidth = 2;
-
-        // 카드 타이틀
+        // 타이틀
         JLabel lb = new JLabel("고객 로그인");
         lb.setFont(lb.getFont().deriveFont(Font.BOLD, 18f));
-        lb.setForeground(BRAND);
-        card.add(lb, c);
+        lb.setForeground(new Color(0x006241));
+        gbcAdd(card, lb, 0, 0, 2);
 
-        // username
-        c.gridy++;
-        c.gridwidth = 1;
-        card.add(fieldLabel("아이디"), c);
-        c.gridx = 1;
+        // 아이디
+        gbcAdd(card, fieldLabel("아이디"), 0, 1, 1);
         tfUsername.setToolTipText("예: bokchi123");
         tfUsername.setBorder(compoundFieldBorder());
-        card.add(tfUsername, c);
+        gbcAdd(card, tfUsername, 1, 1, 1);
 
-        // password
-        c.gridx = 0; c.gridy++;
-        card.add(fieldLabel("비밀번호"), c);
-        c.gridx = 1;
+        // 비밀번호
+        gbcAdd(card, fieldLabel("비밀번호"), 0, 2, 1);
         pfPassword.setToolTipText("비밀번호를 입력하세요");
         pfPassword.setBorder(compoundFieldBorder());
-        card.add(pfPassword, c);
+        pfPassword.setEchoChar('\u2022');
+        gbcAdd(card, pfPassword, 1, 2, 1);
 
-        // show password
-        c.gridx = 1; c.gridy++;
+        // 비밀번호 표시
         cbShowPw.setOpaque(false);
         cbShowPw.addActionListener(e -> pfPassword.setEchoChar(cbShowPw.isSelected() ? (char)0 : '\u2022'));
-        // 초기엔 숨김
-        pfPassword.setEchoChar('\u2022');
-        card.add(cbShowPw, c);
+        gbcAdd(card, cbShowPw, 1, 3, 1);
 
-        // 버튼들
+        // 버튼 행
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        stylePrimary(btnLogin);
-        styleGhost(btnSignUp);
-
         btnRow.setOpaque(false);
+        styleGhost(btnSignUp);
+        stylePrimary(btnLogin);
         btnRow.add(btnSignUp);
         btnRow.add(btnLogin);
 
-        c.gridx = 0; c.gridy++;
-        c.gridwidth = 2;
-        card.add(Box.createVerticalStrut(6), c);
-        c.gridy++;
-        card.add(btnRow, c);
+        // 여백 + 버튼
+        gbcAdd(card, Box.createVerticalStrut(6), 0, 4, 2);
+        gbcAdd(card, btnRow, 0, 5, 2);
 
         wrap.add(card);
         return wrap;
+    }
+    
+    private void gbcAdd(JPanel parent, Component comp, int x, int y, int w) {
+        GridBagConstraints gc = new GridBagConstraints();
+        gc.gridx = x;
+        gc.gridy = y;
+        gc.gridwidth = w;
+        gc.insets = new Insets(6, 6, 6, 6);
+        gc.anchor = GridBagConstraints.WEST;
+        parent.add(comp, gc);
     }
 
     private JLabel fieldLabel(String text) {
@@ -196,7 +185,7 @@ public class UserLoginFrame extends JFrame {
         b.setBorder(BorderFactory.createLineBorder(BRAND));
     }
 
-    // ================= 로그인 로직 =================
+    // 로그인
     private void onLogin(ActionEvent e) {
         String username = tfUsername.getText().trim();
         String password = new String(pfPassword.getPassword());
@@ -225,11 +214,11 @@ public class UserLoginFrame extends JFrame {
         dispose();
     }
 
-    // =============== 스태프 전환(오른쪽 위 5초 롱프레스) ===============
+    // 스태프 전환
     private void installSecretSwitchOverlay() {
         JRootPane rp = getRootPane();
 
-        // 히트박스 영역만 이벤트 받는 글래스페인
+        // 히트박스 영역만 이벤트 받는 곳
         JComponent glass = new JComponent() {
             @Override public boolean isOpaque() { return false; }
             @Override public boolean contains(int x, int y) {

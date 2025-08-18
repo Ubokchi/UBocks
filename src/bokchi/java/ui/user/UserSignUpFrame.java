@@ -46,8 +46,8 @@ public class UserSignUpFrame extends JFrame {
         root.add(buildCard(), BorderLayout.CENTER);
         return root;
     }
-    
-    //헤더
+
+    /** 상단 헤더 */
     private JComponent buildHeader() {
         JPanel header = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
@@ -82,7 +82,7 @@ public class UserSignUpFrame extends JFrame {
         return header;
     }
 
-    //중앙
+    /** 중앙 카드(라운드+그림자) + 폼 */
     private JComponent buildCard() {
         JPanel wrap = new JPanel(new GridBagLayout());
         wrap.setOpaque(false);
@@ -107,96 +107,93 @@ public class UserSignUpFrame extends JFrame {
         };
         card.setBorder(BorderFactory.createEmptyBorder(28, 32, 24, 32));
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(8, 8, 8, 8);
-        c.anchor = GridBagConstraints.WEST;
-        c.gridx = 0; c.gridy = 0; c.gridwidth = 2;
-
-        JLabel head = new JLabel("회원 정보 입력");
-        head.setFont(head.getFont().deriveFont(Font.BOLD, 18f));
-        head.setForeground(BRAND);
-        card.add(head, c);
-
         // 필드 보더 공통
         Border fieldBorder = BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xDDDDDD)),
                 BorderFactory.createEmptyBorder(8,10,8,10)
         );
 
+        int y = 0;
+
+        // 헤더
+        JLabel head = new JLabel("회원 정보 입력");
+        head.setFont(head.getFont().deriveFont(Font.BOLD, 18f));
+        head.setForeground(BRAND);
+        card.add(head, gbcSpan(0, y, 2)); y++;
+
         // 아이디
-        c.gridy++; c.gridwidth = 1;
-        card.add(fieldLabel("아이디"), c);
-        c.gridx = 1;
+        card.add(fieldLabel("아이디"), gbc(0, y));
         tfUsername.setToolTipText("예: bokchi123");
         tfUsername.setBorder(fieldBorder);
-        
         JPanel idRow = new JPanel(new BorderLayout(6, 0));
         idRow.setOpaque(false);
         idRow.add(tfUsername, BorderLayout.CENTER);
         idRow.add(btnCheckId, BorderLayout.EAST);
-        card.add(idRow, c);
+        card.add(idRow, gbc(1, y)); y++;
 
         // 비밀번호
-        c.gridx = 0; c.gridy++;
-        card.add(fieldLabel("비밀번호"), c);
-        c.gridx = 1;
+        card.add(fieldLabel("비밀번호"), gbc(0, y));
         pfPassword.setBorder(fieldBorder);
         pfPassword.setEchoChar('\u2022');
-        card.add(pfPassword, c);
+        card.add(pfPassword, gbc(1, y)); y++;
 
-        // 비밀번호 확인 + 표시 체크박스
-        c.gridx = 0; c.gridy++;
-        card.add(fieldLabel("비밀번호 확인"), c);
-        c.gridx = 1;
+        // 비밀번호 확인
+        card.add(fieldLabel("비밀번호 확인"), gbc(0, y));
         pfPassword2.setBorder(fieldBorder);
         pfPassword2.setEchoChar('\u2022');
-        card.add(pfPassword2, c);
+        card.add(pfPassword2, gbc(1, y)); y++;
 
-        c.gridx = 1; c.gridy++;
+        // 비밀번호 표시
         cbShowPw.setOpaque(false);
         cbShowPw.addActionListener(e -> {
             char echo = cbShowPw.isSelected() ? (char)0 : '\u2022';
             pfPassword.setEchoChar(echo);
             pfPassword2.setEchoChar(echo);
         });
-        card.add(cbShowPw, c);
+        card.add(cbShowPw, gbc(1, y)); y++;
 
         // 이름
-        c.gridx = 0; c.gridy++;
-        card.add(fieldLabel("이름"), c);
-        c.gridx = 1;
+        card.add(fieldLabel("이름"), gbc(0, y));
         tfName.setBorder(fieldBorder);
-        card.add(tfName, c);
+        card.add(tfName, gbc(1, y)); y++;
 
         // 전화번호
-        c.gridx = 0; c.gridy++;
-        card.add(fieldLabel("전화번호"), c);
-        c.gridx = 1;
+        card.add(fieldLabel("전화번호"), gbc(0, y));
         tfPhone.setToolTipText("예: 010-1234-5678 또는 01012345678");
         tfPhone.setBorder(fieldBorder);
-        
         JPanel phoneRow = new JPanel(new BorderLayout(6, 0));
         phoneRow.setOpaque(false);
         phoneRow.add(tfPhone, BorderLayout.CENTER);
         phoneRow.add(btnCheckPhone, BorderLayout.EAST);
-        card.add(phoneRow, c);
+        card.add(phoneRow, gbc(1, y)); y++;
 
-        // 버튼 행
-        c.gridx = 0; c.gridy++;
-        c.gridwidth = 2;
+        // 버튼
+        card.add(Box.createVerticalStrut(8), gbcSpan(0, y, 2)); y++;
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         buttons.setOpaque(false);
         styleGhost(btnCancel);
         stylePrimary(btnSignUp);
         buttons.add(btnCancel);
         buttons.add(btnSignUp);
-
-        card.add(Box.createVerticalStrut(8), c);
-        c.gridy++;
-        card.add(buttons, c);
+        card.add(buttons, gbcSpan(0, y, 2));
 
         wrap.add(card);
         return wrap;
+    }
+
+    // 헬퍼: 매번 새로운 GridBagConstraints 생성
+    private GridBagConstraints gbc(int x, int y) {
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(8, 8, 8, 8);
+        g.anchor = GridBagConstraints.WEST;
+        g.gridx = x;
+        g.gridy = y;
+        return g;
+    }
+    private GridBagConstraints gbcSpan(int x, int y, int span) {
+        GridBagConstraints g = gbc(x, y);
+        g.gridwidth = span;
+        return g;
     }
 
     private JLabel fieldLabel(String text) {
@@ -221,7 +218,7 @@ public class UserSignUpFrame extends JFrame {
     private void wireEvents() {
         btnSignUp.addActionListener(this::onSignUp);
         btnCancel.addActionListener(e -> dispose());
-        
+
         btnCheckId.addActionListener(e -> {
             String username = tfUsername.getText().trim();
             if (username.isEmpty()) {
@@ -231,7 +228,7 @@ public class UserSignUpFrame extends JFrame {
             }
             try {
                 var dao = JdbcUserDaoImple.getInstance();
-                var exists = dao.findByUsername(username) != null; // existsByUsername 있으면 그걸 써도 OK
+                boolean exists = dao.findByUsername(username) != null; // existsByUsername 있으면 그걸 사용
                 if (exists) {
                     JOptionPane.showMessageDialog(this, "이미 사용 중인 아이디입니다.");
                     tfUsername.requestFocus();
@@ -251,23 +248,27 @@ public class UserSignUpFrame extends JFrame {
                 tfPhone.requestFocus();
                 return;
             }
-            // 형식 안내
             if (!phone.matches("\\d{2,3}-\\d{3,4}-\\d{4}") && !phone.matches("\\d{10,11}")) {
-                int ans = JOptionPane.showConfirmDialog(this, "전화번호 형식이 일반적이지 않습니다. 계속 확인할까요?",
+                int ans = JOptionPane.showConfirmDialog(this,
+                        "전화번호 형식이 일반적이지 않습니다. 계속 확인할까요?",
                         "확인", JOptionPane.YES_NO_OPTION);
                 if (ans != JOptionPane.YES_OPTION) return;
             }
             try {
                 var dao = JdbcUserDaoImple.getInstance();
-                var dup = dao.findByPhone(phone) != null; // existsByPhone(...)이 있으면 그걸 써도 OK
+                boolean dup = false;
+                try {
+                    dup = dao.findByPhone(phone) != null; // existsByPhone() 있으면 그걸 사용
+                } catch (NoSuchMethodError err) {
+                    JOptionPane.showMessageDialog(this, "전화번호 조회 메서드가 없습니다. JdbcUserDaoImple에 findByPhone(String)을 추가하세요.");
+                    return;
+                }
                 if (dup) {
                     JOptionPane.showMessageDialog(this, "이미 등록된 전화번호입니다.");
                     tfPhone.requestFocus();
                 } else {
                     JOptionPane.showMessageDialog(this, "사용 가능한 전화번호입니다.");
                 }
-            } catch (NoSuchMethodError err) {
-                JOptionPane.showMessageDialog(this, "전화번호 조회 메서드가 없습니다. JdbcUserDaoImple에 findByPhone(String)을 추가하세요.");
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "중복체크 오류: " + ex.getMessage());
@@ -275,7 +276,7 @@ public class UserSignUpFrame extends JFrame {
         });
     }
 
-    // 가입
+    // 가입 로직
     private void onSignUp(ActionEvent e) {
         String username = tfUsername.getText().trim();
         String pw1 = new String(pfPassword.getPassword());

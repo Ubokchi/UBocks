@@ -8,10 +8,12 @@ import bokchi.java.config.ConnectionProvider;
 import bokchi.java.model.UserVO;
 import bokchi.java.model.enums.ItemType;
 import bokchi.java.model.enums.OrderStatus;
+import bokchi.java.ui.user.CartPanel.CartLine;
 
 import javax.swing.*;
 import java.awt.*;
 import java.sql.Connection;
+import java.util.List;
 
 public class UserMainFrame extends JFrame {
     private final UserVO customer;
@@ -48,6 +50,8 @@ public class UserMainFrame extends JFrame {
 
         loadFromDao(currentType);
 
+        // (UserVO customer, 		List<CartLine> lines, 		int totalAmount,
+        // boolean usedFreeDrink, 	Integer freeDrinkItemId)
         cartPanel.setCheckoutListener((cust, lines, total, usedFreeDrink, freeDrinkItemId) -> {
             var orderDao  = JdbcOrderDaoImple.getInstance();
             var userDao   = JdbcUserDaoImple.getInstance();
@@ -56,7 +60,7 @@ public class UserMainFrame extends JFrame {
             try (Connection conn = ConnectionProvider.getConnection()) {
                 conn.setAutoCommit(false);
                 try {
-                    // 1) 서버에서 총액 재계산
+                    // 1) 총액 재계산
                     int serverTotal = lines.stream().mapToInt(l -> l.lineAmount).sum();
 
                     // 2) 주문 생성
@@ -101,7 +105,7 @@ public class UserMainFrame extends JFrame {
                             (usedFreeDrink ? "\n무료 음료 1잔 사용" : "")
                     );
 
-                    // (선택) 상단 사용자 스탬프 라벨 갱신
+                    // 상단 사용자 스탬프 라벨 갱신
                     if (cust != null) {
                         int delta = stampsEarned - (usedFreeDrink ? JdbcOrderDaoImple.FREE_DRINK_COST : 0);
                         cust.setRewardBalance(cust.getRewardBalance() + delta);

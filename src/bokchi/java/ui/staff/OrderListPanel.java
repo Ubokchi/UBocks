@@ -17,7 +17,7 @@ public class OrderListPanel extends JPanel {
     private final JTable table;
     private final DefaultTableModel model;
 
-    // 상단바: 기존 유지 + 오른쪽에 상태 변경 UI 추가
+    // 상단바
     private final JButton btnReload = new JButton("새로고침");
     private final JComboBox<OrderStatus> cbStatus =
             new JComboBox<>(OrderStatus.values());
@@ -58,7 +58,7 @@ public class OrderListPanel extends JPanel {
         table.getColumnModel().getColumn(3).setPreferredWidth(90);
         table.getColumnModel().getColumn(3).setCellRenderer(right);
 
-        // 상단 바 구성: 왼쪽(기존) + 오른쪽(상태변경)
+        // 상단 바
         JPanel top = new JPanel(new BorderLayout());
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -87,7 +87,7 @@ public class OrderListPanel extends JPanel {
     private void reloadFromDb() {
         try {
             var dao = JdbcOrderDaoImple.getInstance();
-            List<OrderVO> list = dao.findAll();   // findAll()은 DAO에 구현되어 있어야 함
+            List<OrderVO> list = dao.findAll();
 
             model.setRowCount(0);
             for (OrderVO vo : list) {
@@ -133,7 +133,7 @@ public class OrderListPanel extends JPanel {
 
         try {
             var dao = JdbcOrderDaoImple.getInstance();
-            int updated = dao.updateStatus(orderId, newStatus.name()); // DAO 메서드 사용
+            int updated = dao.updateStatus(orderId, newStatus.name());
             if (updated == 1) {
                 // 테이블 즉시 반영
                 model.setValueAt(newStatus.name(), row, 2);
