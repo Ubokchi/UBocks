@@ -24,23 +24,6 @@ public class JdbcOrderDaoImple {
 		return instance;
 	}
 
-	// 오더 삽입
-	public int insertOrder(Connection conn, Integer userId, int totalAmount) throws SQLException {
-		String sql = "INSERT INTO orders (user_id, status, total_amount) VALUES (?, 'PENDING', ?)";
-		try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-			if (userId == null) ps.setNull(1, Types.INTEGER);
-			else ps.setInt(1, userId);
-			ps.setInt(2, totalAmount);
-
-			if (ps.executeUpdate() != 1) throw new SQLException("주문 생성 실패");
-
-			try (ResultSet rs = ps.getGeneratedKeys()) {
-				if (!rs.next()) throw new SQLException("order_id 생성 실패");
-				return rs.getInt(1);
-			}
-		}
-	}
-
 	// 아이템 삽입
 	public void insertOrderItem(Connection conn, int orderId, int itemId, int qty, int unitPrice) throws SQLException {
 		String sql = "INSERT INTO order_items (order_id, item_id, qty, unit_price) VALUES (?, ?, ?, ?)";
@@ -85,7 +68,7 @@ public class JdbcOrderDaoImple {
 		}
 	}
 
-	// 삽입
+	// 오더 삽입
 	public int insert(OrderVO order) {
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -113,6 +96,23 @@ public class JdbcOrderDaoImple {
 			return 0;
 		} finally {
 			DBConnManager.close(conn, ps);
+		}
+	}
+
+	// 오더 삽입
+	public int insertOrder(Connection conn, Integer userId, int totalAmount) throws SQLException {
+		String sql = "INSERT INTO orders (user_id, status, total_amount) VALUES (?, 'PENDING', ?)";
+		try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+			if (userId == null) ps.setNull(1, Types.INTEGER);
+			else ps.setInt(1, userId);
+			ps.setInt(2, totalAmount);
+
+			if (ps.executeUpdate() != 1) throw new SQLException("주문 생성 실패");
+
+			try (ResultSet rs = ps.getGeneratedKeys()) {
+				if (!rs.next()) throw new SQLException("order_id 생성 실패");
+				return rs.getInt(1);
+			}
 		}
 	}
 

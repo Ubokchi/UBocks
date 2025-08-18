@@ -209,13 +209,12 @@ public class JdbcItemDaoImple {
 	    try {
 	        conn = ConnectionProvider.getConnection();
 
-	        // 1) 검색어 안전 처리: \, %, _ 이스케이프
+	        // 검색어 안전 처리: \, %, _ 이스케이프
 	        String q = (keyword == null) ? "" : keyword;
 	        q = q.replace("\\", "\\\\")   // \  -> \\
 	             .replace("%", "\\%")     // %  -> \%
 	             .replace("_", "\\_");    // _  -> \_
 
-	        // 2) ESCAPE 절 없이 LIKE만 사용
 	        String sql =
 	            "SELECT * FROM items " +
 	            " WHERE is_active = TRUE " +

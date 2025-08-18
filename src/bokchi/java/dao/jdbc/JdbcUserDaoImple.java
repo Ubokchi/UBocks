@@ -72,7 +72,7 @@ public class JdbcUserDaoImple {
 					);
 			ps.setInt(1, userId);
 			rs = ps.executeQuery();
-			return rs.next() ? mapRow(rs) : null;
+			return rs.next() ? mapRow(rs) : null; 
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;

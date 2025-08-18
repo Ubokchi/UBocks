@@ -2,6 +2,8 @@ package bokchi.java.dao;
 
 import bokchi.java.model.RewardHistoryVO;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,4 +24,9 @@ public interface RewardHistoryDao {
     int recordEarn(int userId, Integer orderId, int stamps);      // +적립
     int recordRedeem(int userId, Integer orderId, int stampsUsed); // -사용
     int recordAdjust(int userId, int delta, String noteIgnored);   // 수동 조정
+    
+    int insert(Connection conn, RewardHistoryVO vo) throws SQLException;
+    int recordEarn(Connection conn, int userId, Integer orderId, int stamps) throws SQLException;
+    int recordRedeem(Connection conn, int userId, Integer orderId, int stampsUsed) throws SQLException;
+    int recordAdjust(Connection conn, int userId, int delta, String noteIgnored) throws SQLException;
 }
