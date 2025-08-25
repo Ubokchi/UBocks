@@ -24,6 +24,24 @@ public class OrderListPanel extends JPanel {
 	private final JButton btnChange = new JButton("상태 변경");
 
 	private final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+	
+	private boolean isForbiddenTransition(OrderStatus cur, OrderStatus next) {
+	    if (cur == null || next == null) return true;
+	    if (cur == next) return true; // 동일 상태는 불필요
+
+	    // 완료/취소 상태는 불변
+	    if (cur == OrderStatus.COMPLETED || cur == OrderStatus.CANCELLED || cur == OrderStatus.CANCELLED) {
+	        return true;
+	    }
+
+	    // 허용하는 정상 흐름
+	    if (cur == OrderStatus.PENDING && next == OrderStatus.PAID) return false;
+	    if (cur == OrderStatus.PAID    && next == OrderStatus.COMPLETED) return false;
+	    if (cur == OrderStatus.PENDING && next == OrderStatus.CANCELLED) return false;
+
+	    // 그 외는 금지
+	    return true;
+	}
 
 	public OrderListPanel() {
 		super(new BorderLayout(8, 8));
@@ -124,29 +142,11 @@ public class OrderListPanel extends JPanel {
 	    try {
 	        curStatus = OrderStatus.valueOf(curStr);
 	    } catch (IllegalArgumentException ex) {
-	        curStatus = null; // 알 수 없는 문자열이면 특별 규칙 없이 진행
+	        curStatus = null; // 알 수 없는 상태면 금지 함수에서 true로 처리됨
 	    }
 
-	    if (curStatus != null && curStatus == newStatus) {
-	        JOptionPane.showMessageDialog(this, "이미 " + newStatus.name() + " 상태입니다.");
-	        return;
-	    }
-
-	    // 금지 전이 규칙
-	    boolean isCompletOrCancel = (curStatus == OrderStatus.COMPLETED) ||
-	                                    (curStatus == OrderStatus.CANCELLED || curStatus == OrderStatus.CANCELLED);
-	    boolean isPendOrPaid = (newStatus == OrderStatus.PENDING) || (newStatus == OrderStatus.PAID);
-
-	    // 1) COMPLETED/CANCELED → PENDING/PAID 되돌리기 금지
-	    boolean forbidBefore = isCompletOrCancel && isPendOrPaid;
-
-	    // 2) PAID → PENDING 다운그레이드 금지
-	    boolean forbidPaidToPend = (curStatus == OrderStatus.PAID) && (newStatus == OrderStatus.PENDING);
-
-	    // 3) PENDING → COMPLETED 바로 점프 금지(결제 없이 완료 방지)
-	    boolean forbidPendToComplte = (curStatus == OrderStatus.PENDING) && (newStatus == OrderStatus.COMPLETED);
-
-	    if (forbidBefore || forbidPaidToPend || forbidPendToComplte) {
+	    // 전이 금지 규칙 체크
+	    if (isForbiddenTransition(curStatus, newStatus)) {
 	        JOptionPane.showMessageDialog(this,
 	                "현재 상태(" + curStr + ")에서 " + newStatus.name() + " 로 변경할 수 없습니다.");
 	        return;
